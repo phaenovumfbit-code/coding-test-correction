@@ -121,7 +121,6 @@ def extract_tasks_from_assignment(
         output_config={
             "format": {
                 "type": "json_schema",
-                "name": "task_extraction",
                 "schema": TASK_EXTRACTION_SCHEMA,
             }
         },
@@ -199,7 +198,6 @@ def analyze_student_submission(
         output_config={
             "format": {
                 "type": "json_schema",
-                "name": "student_grading",
                 "schema": GRADING_SCHEMA,
             }
         },
