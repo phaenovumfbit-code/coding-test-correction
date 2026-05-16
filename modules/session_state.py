@@ -13,6 +13,7 @@ def init_session_state():
         "feedback": {},
         "analysis_done": False,
         "analysis_running": False,
+        "sample_solution_files": [],
     }
     for key, value in defaults.items():
         if key not in st.session_state:

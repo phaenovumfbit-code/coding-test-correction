@@ -135,8 +135,25 @@ def analyze_student_submission(
     tasks: list[dict],
     student_files: list[dict],
     assignment_context: str,
+    sample_solution_files: list[dict] = [],
 ) -> dict:
     client = get_client()
+
+    solution_text = ""
+    if sample_solution_files:
+        parts = []
+        for f in sample_solution_files:
+            if f["content_type"] == "text":
+                parts.append(f"--- {f['filename']} ---\n{f['content']}")
+        if parts:
+            solution_text = "\n\n".join(parts)
+
+    cached_text = (
+        f"AUFGABEN MIT PUNKTWERTEN:\n{json.dumps(tasks, ensure_ascii=False, indent=2)}\n\n"
+        f"AUFGABENBESCHREIBUNG (Kontext):\n{assignment_context[:3000]}"
+    )
+    if solution_text:
+        cached_text += f"\n\nMUSTERLÖSUNG (Referenz für die Bewertung):\n{solution_text[:3000]}"
 
     system = [
         {
@@ -145,10 +162,7 @@ def analyze_student_submission(
         },
         {
             "type": "text",
-            "text": (
-                f"AUFGABEN MIT PUNKTWERTEN:\n{json.dumps(tasks, ensure_ascii=False, indent=2)}\n\n"
-                f"AUFGABENBESCHREIBUNG (Kontext):\n{assignment_context[:3000]}"
-            ),
+            "text": cached_text,
             "cache_control": {"type": "ephemeral"},
         },
     ]
@@ -230,6 +244,7 @@ def analyze_all_students(
     students: list[dict],
     assignment_context: str,
     progress_callback: Optional[Callable] = None,
+    sample_solution_files: list[dict] = [],
 ) -> dict:
     all_feedback = {}
     total = len(students)
@@ -242,6 +257,7 @@ def analyze_all_students(
                 tasks=tasks,
                 student_files=student["files"],
                 assignment_context=assignment_context,
+                sample_solution_files=sample_solution_files,
             )
             all_feedback[student_name] = feedback
         except Exception as e:

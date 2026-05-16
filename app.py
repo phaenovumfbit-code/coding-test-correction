@@ -61,6 +61,26 @@ def render_step1():
                 except Exception as e:
                     st.error(f"Fehler bei der Extraktion: {e}")
 
+    # Musterlösung (optional)
+    st.divider()
+    st.subheader("Musterlösung hochladen (optional)")
+    st.caption("Die KI nutzt die Musterlösung als Referenz bei der Bewertung der Schülerarbeiten.")
+    solution_files = st.file_uploader(
+        "Musterlösung (PDF, Code-Dateien oder ZIP)",
+        type=["pdf", "py", "java", "js", "ts", "jsx", "tsx", "zip", "cpp", "c", "h",
+              "cs", "go", "rs", "rb", "php", "kt", "txt", "md", "html", "css", "sql"],
+        accept_multiple_files=True,
+        key="solution_upload",
+    )
+    if solution_files:
+        all_solution_files = []
+        for sf in solution_files:
+            all_solution_files.extend(process_student_upload(sf))
+        st.session_state["sample_solution_files"] = all_solution_files
+        st.success(f"Musterlösung geladen: {len(all_solution_files)} Datei(en).")
+    elif not st.session_state["sample_solution_files"]:
+        st.info("Keine Musterlösung hochgeladen — die KI bewertet nur anhand des Aufgabenblatts.")
+
     if st.session_state["tasks"] and not st.session_state["tasks_confirmed"]:
         st.subheader("Extrahierte Aufgaben (bearbeitbar)")
         st.caption("Sie können die Aufgabenbeschreibungen und Punktwerte anpassen, bevor Sie fortfahren.")
@@ -157,8 +177,10 @@ def render_step3():
     students = st.session_state["students"]
     assignment_context = st.session_state["assignment_context"]
 
+    solution_files = st.session_state.get("sample_solution_files", [])
+    solution_hint = " | Mit Musterlösung als Referenz" if solution_files else ""
     st.info(
-        f"**{len(students)} Schüler** werden gegen **{len(tasks)} Aufgaben** bewertet.\n\n"
+        f"**{len(students)} Schüler** werden gegen **{len(tasks)} Aufgaben** bewertet.{solution_hint}\n\n"
         "Die Analyse läuft sequenziell. Bitte warten Sie, bis alle Schüler verarbeitet wurden."
     )
 
@@ -193,6 +215,7 @@ def render_step3():
                 students=students,
                 assignment_context=assignment_context,
                 progress_callback=on_progress,
+                sample_solution_files=solution_files,
             )
             st.session_state["feedback"] = feedback_result
             st.session_state["analysis_done"] = True
